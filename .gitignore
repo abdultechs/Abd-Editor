@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches & IDEs
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.log
+*.db
+
+# Media sample inputs, outputs, temp files
+Input/*
+!Input/.gitkeep
+temp/*
+!temp/.gitkeep
+app/temp/*
+!app/temp/.gitkeep
+app/logs/*
+!app/logs/.gitkeep
+app/exports/*
+!app/exports/.gitkeep
+Input/Output/*
+!Input/Output/.gitkeep
+test_text.txt
+
+# Build & Spec artifacts
+build/
+dist/
+inout/
+*.spec
+
+# OS generated files
+Thumbs.db
+Desktop.ini
