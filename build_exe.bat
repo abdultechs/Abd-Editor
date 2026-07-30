@@ -14,7 +14,7 @@ if exist "dist" rmdir /s /q "dist"
 
 echo.
 echo Building executable with PyInstaller...
-py -3 -m PyInstaller --noconsole --onefile --name="Abd Editor V1.0" --add-data "resources;resources" --add-data "music;music" --hidden-import=PIL --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtWidgets --hidden-import=PyQt5.QtGui main.py
+py -3 -m PyInstaller --noconsole --onefile --name="Abd Editor V1.0" --add-data "resources;resources" --add-data "music;music" --hidden-import=PIL --hidden-import=PIL.Image --hidden-import=PIL.ImageDraw --hidden-import=PIL.ImageFont --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtWidgets --hidden-import=PyQt5.QtGui --hidden-import=sqlite3 main.py
 
 echo.
 echo ========================================================
