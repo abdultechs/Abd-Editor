@@ -8,6 +8,7 @@ Ported from executePlan.ts.
 import os
 import re
 import time
+import shutil
 import subprocess
 from typing import Callable, Optional
 
@@ -114,7 +115,7 @@ def execute_ffmpeg_plan(
         except OSError:
             pass
 
-    os.rename(plan.temp_output_path, plan.output_path)
+    shutil.move(plan.temp_output_path, plan.output_path)
     processing_time_ms = int((time.time() - started_at) * 1000)
 
     return {"processing_time_ms": processing_time_ms}

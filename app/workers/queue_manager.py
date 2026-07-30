@@ -250,6 +250,7 @@ class QueueManager(QObject):
         if job_id in self.active_workers:
             del self.active_workers[job_id]
 
+        self._emit_log("error", "worker", f"Job failed: {error_message}")
         self.progress_updated.emit(job_id, 0, "Failed")
         self.job_repo.mark_failed(job_id, error_message)
         job = self.job_repo.find_by_id(job_id)

@@ -35,6 +35,7 @@ class FfmpegPlan:
     args: list[str]
     total_duration: float = 0.0
     extra_inputs: list[str] = field(default_factory=list)
+    temp_files_to_clean: list[str] = field(default_factory=list)
     disable_audio: bool = False
 
 
@@ -331,6 +332,14 @@ def build_ffmpeg_plan(
 
     command = f"ffmpeg {' '.join(_quote(a) for a in args)}"
 
+    from app.utils.constants import TEMP_DIR
+    temp_dir_norm = os.path.normpath(TEMP_DIR).lower()
+    temp_files_to_clean = []
+    for x in extra_inputs:
+        x_norm = os.path.normpath(x).lower()
+        if x_norm.startswith(temp_dir_norm) or "emoji_overlay" in os.path.basename(x_norm):
+            temp_files_to_clean.append(x)
+
     return FfmpegPlan(
         input_path=input_path,
         output_path=output_path,
@@ -339,5 +348,6 @@ def build_ffmpeg_plan(
         args=args,
         total_duration=total_duration,
         extra_inputs=extra_inputs,
+        temp_files_to_clean=temp_files_to_clean,
         disable_audio=disable_audio,
     )

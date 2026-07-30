@@ -5,11 +5,12 @@ Ported directly from processVideo.ts.
 Runs: probe input -> build plan -> execute FFmpeg -> probe output -> assemble stats.
 """
 
+import os
 from dataclasses import dataclass
 from typing import Callable, Optional
 
 from app.processing.probe import probe_media
-from app.processing.plan_builder import build_ffmpeg_plan
+from app.processing.plan_builder import build_ffmpeg_plan, FfmpegPlan
 from app.processing.executor import execute_ffmpeg_plan
 
 
@@ -49,35 +50,45 @@ def process_video(
     emit_progress(5, "probe")
     emit_current_operation("Building FFmpeg plan")
 
-    plan = build_ffmpeg_plan(
-        input_path=job["input_path"],
-        output_path=job["output_path"],
-        script=script,
-        probe=input_probe,
-    )
+    plan: Optional[FfmpegPlan] = None
+    try:
+        plan = build_ffmpeg_plan(
+            input_path=job["input_path"],
+            output_path=job["output_path"],
+            script=script,
+            probe=input_probe,
+        )
 
-    emit_log("info", "ffmpeg", plan.command)
-    emit_current_operation("Executing FFmpeg")
+        emit_log("info", "ffmpeg", plan.command)
+        emit_current_operation("Executing FFmpeg")
 
-    exec_res = execute_ffmpeg_plan(
-        plan=plan,
-        duration_seconds=plan.total_duration if plan.total_duration > 0 else input_probe.duration_seconds,
-        emit_log=lambda msg: emit_log("info", "ffmpeg", msg),
-        emit_output=emit_output,
-        emit_progress=emit_progress,
-    )
+        exec_res = execute_ffmpeg_plan(
+            plan=plan,
+            duration_seconds=plan.total_duration if plan.total_duration > 0 else input_probe.duration_seconds,
+            emit_log=lambda msg: emit_log("info", "ffmpeg", msg),
+            emit_output=emit_output,
+            emit_progress=emit_progress,
+        )
 
-    emit_current_operation("Probing output")
-    output_probe = probe_media(job["output_path"])
-    resolution_after = output_probe.resolution_str()
+        emit_current_operation("Probing output")
+        output_probe = probe_media(job["output_path"])
+        resolution_after = output_probe.resolution_str()
 
-    emit_log("info", "worker", f"Completed {job['file_name']}")
+        emit_log("info", "worker", f"Completed {job['file_name']}")
 
-    return ProcessVideoResult(
-        processing_time_ms=exec_res["processing_time_ms"],
-        duration_before=input_probe.duration_seconds,
-        duration_after=output_probe.duration_seconds,
-        resolution_before=resolution_before,
-        resolution_after=resolution_after,
-        command=plan.command,
-    )
+        return ProcessVideoResult(
+            processing_time_ms=exec_res["processing_time_ms"],
+            duration_before=input_probe.duration_seconds,
+            duration_after=output_probe.duration_seconds,
+            resolution_before=resolution_before,
+            resolution_after=resolution_after,
+            command=plan.command,
+        )
+    finally:
+        if plan and plan.temp_files_to_clean:
+            for tmp_file in plan.temp_files_to_clean:
+                if os.path.exists(tmp_file):
+                    try:
+                        os.remove(tmp_file)
+                    except OSError:
+                        pass

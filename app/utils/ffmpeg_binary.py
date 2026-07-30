@@ -96,10 +96,12 @@ def resolve_default_font() -> str | None:
     env = os.environ.get("FFMPEG_FONT_FILE", "").strip()
     if env and os.path.isfile(env):
         return env
+    system_root = os.environ.get("SystemRoot", r"C:\Windows")
+    fonts_dir = os.path.join(system_root, "Fonts")
     candidates = [
-        r"C:\Windows\Fonts\arial.ttf",
-        r"C:\Windows\Fonts\segoeui.ttf",
-        r"C:\Windows\Fonts\calibri.ttf",
+        os.path.join(fonts_dir, "arial.ttf"),
+        os.path.join(fonts_dir, "segoeui.ttf"),
+        os.path.join(fonts_dir, "calibri.ttf"),
     ]
     for c in candidates:
         if os.path.isfile(c):

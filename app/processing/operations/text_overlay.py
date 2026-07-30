@@ -15,12 +15,19 @@ Supports:
 import os
 import textwrap
 from app.processing.operations.base import OperationResult, OperationContext
+from app.utils.constants import TEMP_DIR
 from app.utils.ffmpeg_binary import escape_for_filter, to_forward_slashes, resolve_default_font
+
+
+def get_windows_fonts_dir() -> str:
+    """Return absolute path to Windows Fonts directory dynamically."""
+    system_root = os.environ.get("SystemRoot", r"C:\Windows")
+    return os.path.join(system_root, "Fonts")
 
 
 def resolve_font_file(font_family: str = "Impact", font_weight: str = "Bold") -> str | None:
     """Find matching .ttf font file in Windows Fonts directory."""
-    fonts_dir = r"C:\Windows\Fonts"
+    fonts_dir = get_windows_fonts_dir()
     if not os.path.exists(fonts_dir):
         return resolve_default_font()
 
@@ -134,8 +141,9 @@ def _render_emoji_text_overlay_png(
     img = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    font_path = resolve_font_file(font_family, "Bold") or r"C:\Windows\Fonts\impact.ttf"
-    emoji_font_path = r"C:\Windows\Fonts\seguiemj.ttf"
+    fonts_dir = get_windows_fonts_dir()
+    font_path = resolve_font_file(font_family, "Bold") or os.path.join(fonts_dir, "impact.ttf")
+    emoji_font_path = os.path.join(fonts_dir, "seguiemj.ttf")
 
     text_font = None
     if font_path and os.path.isfile(font_path):
@@ -145,7 +153,10 @@ def _render_emoji_text_overlay_png(
             pass
 
     if text_font is None:
-        fallbacks = [r"C:\Windows\Fonts\impact.ttf", r"C:\Windows\Fonts\arialbd.ttf", r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\segoeuib.ttf"]
+        fallbacks = [
+            os.path.join(fonts_dir, f)
+            for f in ["impact.ttf", "arialbd.ttf", "arial.ttf", "segoeuib.ttf"]
+        ]
         for fb in fallbacks:
             if os.path.isfile(fb):
                 try:
@@ -270,12 +281,15 @@ def _render_emoji_text_overlay_png(
         a = a.point(lambda p: int(p * opacity))
         img = Image.merge("RGBA", (r, g, b, a))
 
-    temp_dir = r"e:\Abd Editor V1.0\app\temp"
-    os.makedirs(temp_dir, exist_ok=True)
-    text_hash = hashlib.md5(text.encode("utf-8")).hexdigest()[:10]
-    out_path = os.path.join(temp_dir, f"emoji_overlay_{text_hash}.png")
-    img.save(out_path)
-    return out_path
+    try:
+        temp_dir = TEMP_DIR
+        os.makedirs(temp_dir, exist_ok=True)
+        text_hash = hashlib.md5(text.encode("utf-8")).hexdigest()[:10]
+        out_path = os.path.join(temp_dir, f"emoji_overlay_{text_hash}.png")
+        img.save(out_path)
+        return out_path
+    except Exception:
+        return None
 
 
 def apply_text(op: dict, ctx: OperationContext) -> OperationResult:
